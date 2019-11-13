@@ -1,0 +1,611 @@
+#!/bin/sh
+
+OYSTER=OYSTER
+OYSTER_N=0
+OYSTER_RAND_SEED=$$
+OYSTER_LIST_NEST=0
+
+alias -- ,=, 2>/dev/null &&  alias alias='alias --'
+eval -- 2>/dev/null &&  alias eval='eval --'
+shopt -s expand_aliases 2>/dev/null
+
+alias _next='case "$1" in "") return; esac; local OYSTER_F=$1; shift; eval "$OYSTER_F" '\''"$@"'\'
+alias _pop0=''
+alias _pop1='unset $OYSTER$OYSTER_N; OYSTER_N=$((OYSTER_N-1))'
+alias _pop2='unset $OYSTER$OYSTER_N $OYSTER$((OYSTER_N-=1)); OYSTER_N=$((OYSTER_N-1))'
+alias _pop3='unset $OYSTER$OYSTER_N $OYSTER$((OYSTER_N-=1)) $OYSTER$((OYSTER_N-=1)); OYSTER_N=$((OYSTER_N-1))'
+alias _pop4='unset $OYSTER$OYSTER_N $OYSTER$((OYSTER_N-=1)) $OYSTER$((OYSTER_N-=1)) $OYSTER$((OYSTER_N-=1)); OYSTER_N=$((OYSTER_N-1))'
+alias _setarg0=''
+alias _setarg1='eval "local OYSTER_ARG1=\"\$$OYSTER$OYSTER_N\""'
+alias _setarg2='eval "local OYSTER_ARG2=\"\$$OYSTER$OYSTER_N\" OYSTER_ARG1=\"\$$OYSTER$((OYSTER_N-1))\""'
+alias _setarg3='eval "local OYSTER_ARG3=\"\$$OYSTER$OYSTER_N\" OYSTER_ARG2=\"\$$OYSTER$((OYSTER_N-1))\" OYSTER_ARG1=\"\$$OYSTER$((OYSTER_N-2))\""'
+alias _setarg4='eval "local OYSTER_ARG4=\"\$$OYSTER$OYSTER_N\" OYSTER_ARG3=\"\$$OYSTER$((OYSTER_N-1))\" OYSTER_ARG2=\"\$$OYSTER$((OYSTER_N-2))\" OYSTER_ARG1=\"\$$OYSTER$((OYSTER_N-3))\""'
+alias _setarg1_0=''
+alias _setarg2_0=''
+alias _setarg3_0=''
+alias _setarg4_0=''
+alias _setarg1_1='local OYSTER_ARG2="$1"'
+alias _setarg1_2='local OYSTER_ARG2="$1" OYSTER_ARG3="$2"'
+alias _setarg2_1='local OYSTER_ARG3="$1"'
+alias _setarg0_1='local OYSTER_ARG1="$1"'
+alias _setarg0_2='local OYSTER_ARG1="$1" OYSTER_ARG2="$2"'
+alias _setarg0_3='local OYSTER_ARG1="$1" OYSTER_ARG2="$2" OYSTER_ARG3="$3"'
+alias _setarg0_4='local OYSTER_ARG1="$1" OYSTER_ARG2="$2" OYSTER_ARG3="$3" OYSTER_ARG4="$4"'
+
+alias oyster-reset='popall; OYSTER_LIST_NEST=0; alias ,=push'
+
+fcall() {
+  local OYSTER_F="$1"
+  shift
+  eval "$OYSTER_F"
+}
+alias @=fcall
+
+_push_mul() {
+  local OYSTER_I
+  for OYSTER_I in "$@"; do
+    eval "$OYSTER$((OYSTER_N+=1))=\"\$OYSTER_I\""
+  done
+}
+
+_push() {
+  eval "$OYSTER$((OYSTER_N+=1))=\$1"
+}
+
+push() {
+  eval "$OYSTER$((OYSTER_N+=1))=\$1"
+  shift
+  _next
+}
+alias ,=push
+
+pop() {
+  unset $OYSTER$OYSTER_N
+  OYSTER_N=$((OYSTER_N-1))
+  _next
+}
+
+dup() {
+  eval "$OYSTER$((OYSTER_N+1))=\$$OYSTER$OYSTER_N"
+  OYSTER_N=$((OYSTER_N+1))
+  _next
+}
+
+swap() {
+  _setarg2
+  _pop2
+  _push_mul "$OYSTER_ARG2" "$OYSTER_ARG1"
+  _next
+}
+
+cmd() {
+  local OYSTER_I=0 OYSTER_X
+  while [ $((OYSTER_I+=1)) -le $OYSTER_N ]; do
+    eval 'set -- "$@" "$'"$OYSTER$OYSTER_I"'"'
+  done
+  popall
+  _next
+}
+
+def_cmdn() {
+  local OYSTER_I=0 OYSTER_X=
+  while [ $((OYSTER_I+=1)) -le $1 ]; do
+    OYSTER_X=$OYSTER_X' "$OYSTER_ARG'$OYSTER_I'"'
+  done
+
+  eval '
+    cmd'$1'() {
+      _setarg'$1'
+      _pop'$1'
+      set -- "$@" '"$OYSTER_X"'
+      _next
+    }'
+}
+
+def_cmdn 1
+def_cmdn 2
+def_cmdn 3
+def_cmdn 4
+
+cmd_no_pop() {
+  local OYSTER_I=0 OYSTER_X
+  while [ $((OYSTER_I+=1)) -le $OYSTER_N ]; do
+    eval 'set -- "$@" "$'"$OYSTER$OYSTER_I"'"'
+  done
+  _next
+}
+
+alias p='cmd_no_pop echo'
+
+
+# combinator 1 2 name
+combinator() {
+  [ -z $4 ] && set -- "$@" "_$3"
+  eval '
+  '$3'() {
+    _setarg'$(($1+$2))'
+    _pop'$(($1+$2))'
+    '$4'
+    _next
+  }
+  '$3'_() {
+    _setarg'$1'
+    _setarg'$1'_'$2'
+    _pop'$1'
+    shift '$2'
+    '$4'
+    _next
+  }'
+}
+
+alias _dip='eval "$OYSTER_ARG2"; _push "$OYSTER_ARG1"'
+combinator 1 1 dip
+
+alias _i='eval "$OYSTER_ARG1"'
+combinator 0 1 i
+
+alias _rep='
+  local OYSTER_I=0
+  while [ $((OYSTER_I+=1)) -le $OYSTER_ARG2 ]; do
+    eval "$OYSTER_ARG1"
+  done'
+combinator 0 2 rep
+
+alias _eq='[ "$OYSTER_ARG1" -eq "$OYSTER_ARG2" ]; _push $?'
+combinator 1 1 eq
+
+alias _ne='[ "$OYSTER_ARG1" -ne "$OYSTER_ARG2" ]; _push $?'
+combinator 1 1 ne
+
+alias _gt='[ "$OYSTER_ARG1" -gt "$OYSTER_ARG2" ]; _push $?'
+combinator 1 1 gt
+
+alias _ge='[ "$OYSTER_ARG1" -ge "$OYSTER_ARG2" ]; _push $?'
+combinator 1 1 ge
+
+alias _le='[ "$OYSTER_ARG1" -le "$OYSTER_ARG2" ]; _push $?'
+combinator 1 1 le
+
+alias _lt='[ "$OYSTER_ARG1" -lt "$OYSTER_ARG2" ]; _push $?'
+combinator 1 1 lt
+
+alias _or='[ "$((OYSTER_ARG1*OYSTER_ARG2))" -eq 0 ]; _push $?'
+combinator 1 1 or
+
+alias _and='[ "$((OYSTER_ARG1+OYSTER_ARG2))" -eq 0 ]; _push $?'
+combinator 1 1 and
+
+alias _not='[ "$OYSTER_ARG1" -ne 0 ]; _push $?'
+combinator 0 1 not
+
+alias _plus='_push "$((OYSTER_ARG1+OYSTER_ARG2))"'
+alias +=plus_
+combinator 1 1 plus
+
+alias _minus='_push "$((OYSTER_ARG1-OYSTER_ARG2))"'
+alias -=minus_
+combinator 1 1 minus
+
+alias _mul='_push "$((OYSTER_ARG1*OYSTER_ARG2))"'
+alias x=mul_
+combinator 1 1 mul
+
+alias _div='_push "$((OYSTER_ARG1/OYSTER_ARG2))"'
+alias y=div_
+combinator 1 1 div
+
+alias _pow='_push "$((OYSTER_ARG1**OYSTER_ARG2))"'
+alias ^=pow_
+combinator 1 1 pow
+
+alias _mod='_push "$((OYSTER_ARG1%OYSTER_ARG2))"'
+alias %=mod_
+combinator 1 1 mod
+
+alias _linrec='
+  eval "$OYSTER_ARG1"
+  eval "local OYSTER_T=\"\$$OYSTER$OYSTER_N\""
+  _pop1
+  case $OYSTER_T
+  in 0) eval "$OYSTER_ARG2"
+  ;; *) eval "$OYSTER_ARG3
+              _linrec
+              $OYSTER_ARG4"
+  esac'
+combinator 0 4 linrec
+
+alias _tailrec='
+  while :; do
+    eval "$OYSTER_ARG1"
+    eval "local OYSTER_T=\"\$$OYSTER$OYSTER_N\""
+    _pop1
+    case $OYSTER_T
+    in 0) eval "$OYSTER_ARG2"
+          break
+    ;; *) eval "$OYSTER_ARG3"
+    esac
+  done'
+combinator 0 3 tailrec
+
+alias _binrec='
+  eval "$OYSTER_ARG1"
+  eval "local OYSTER_T=\"\$$OYSTER$OYSTER_N\""
+  _pop1
+  case $OYSTER_T
+  in 0) eval "$OYSTER_ARG2"
+  ;; *) eval "$OYSTER_ARG3
+              _binrec
+              swap
+              _binrec
+              $OYSTER_ARG4"
+  esac'
+combinator 0 4 binrec
+
+alias _ifel='
+  case "$OYSTER_ARG1"
+  in 0) eval "$OYSTER_ARG2"
+  ;; *) eval "$OYSTER_ARG3"
+  esac'
+combinator 1 2 ifel
+
+alias _when='
+  case "$OYSTER_ARG1"
+  in 0) eval "$OYSTER_ARG2"
+  esac'
+combinator 1 1 when
+
+alias _var='
+  case "$OYSTER_ARG2" in *[!a-zA-Z0-9_]*)
+    return 1
+  esac
+
+  eval "$OYSTER_ARG2=\$OYSTER_ARG1"'
+combinator 1 1 var
+
+alias _readvar='
+  case "$OYSTER_ARG1" in *[!a-zA-Z0-9_]*)
+    return 1
+  esac
+
+  eval "_push \"\$$OYSTER_ARG1\""'
+combinator 0 1 readvar
+
+alias _esc='
+  __esc "$OYSTER_ARG1"
+  _push "$OYSTER_ESC_RETURN"'
+combinator 0 1 esc
+
+__esc() {
+  case "$1"
+  in *[\''"$#&!()~|`*;<>{}%][?\ 	
+']*|'')
+    local IFS="'" OYSTER_I OYSTER_STR=
+    set -f
+    for OYSTER_I in $1_; do
+      case "$OYSTER_I" in *['"$#&!()~|`*;<>{}%][?\ 	
+']*)
+        OYSTER_I="'$OYSTER_I'"
+      esac
+      OYSTER_STR="$OYSTER_STR$OYSTER_I\'"
+    done
+    set +f
+    case "$OYSTER_STR" in *"_'\'")
+      OYSTER_ESC_RETURN="${OYSTER_STR%_*}'"
+    ;; *)
+      OYSTER_ESC_RETURN="${OYSTER_STR%_*}"
+    esac
+  ;; *)
+    OYSTER_ESC_RETURN="$1"
+  esac
+}
+
+alias _strlen='_push ${#OYSTER_ARG1}'
+combinator 0 1 strlen
+
+alias _same='
+  case "$OYSTER_ARG1" in $OYSTER_ARG2)
+    push 0
+    return
+  esac
+  _push 1'
+combinator 1 1 same
+
+alias _stripll='eval "_push \"\${OYSTER_ARG1##$OYSTER_ARG2}\""'
+combinator 1 1 stripll
+
+alias _stripls='eval "_push \"\${OYSTER_ARG1#$OYSTER_ARG2}\""'
+combinator 1 1 stripls
+
+alias _striprl='eval "_push \"\${OYSTER_ARG1%%$OYSTER_ARG2}\""'
+combinator 1 1 striprl
+
+alias _striprs='eval "_push \"\${OYSTER_ARG1%$OYSTER_ARG2}\""'
+combinator 1 1 striprs
+
+alias _substr='
+  [ "$OYSTER_ARG2" -lt 0 ] && OYSTER_ARG2=$((${#OYSTER_ARG1}+OYSTER_ARG2))
+  _drop_str
+  take_str_ "$OYSTER_ARG3"'
+combinator 1 2 substr
+
+alias _dropstr='
+  while [ "$OYSTER_ARG2" -gt 0 ]; do
+    OYSTER_ARG2=$((OYSTER_ARG2-1))
+    OYSTER_ARG1=${OYSTER_ARG1#?}
+  done
+  _push "$OYSTER_ARG1"'
+combinator 1 1 dropstr
+
+alias _takestr='
+  OYSTER_ARG2=$((${#OYSTER_ARG1}-OYSTER_ARG2))
+  while [ "$OYSTER_ARG2" -gt 0 ]; do
+    OYSTER_ARG2=$((OYSTER_ARG2-1))
+    OYSTER_ARG1=${OYSTER_ARG1%?}
+  done
+  _push "$OYSTER_ARG1"'
+combinator 1 1 takestr
+
+alias _strcat='_push "$OYSTER_ARG1$OYSTER_ARG2"'
+combinator 1 1 strcat
+
+alias _gsub='
+  case "$OYSTER_ARG1"
+  in *$OYSTER_ARG2*)
+    eval "push \"\${OYSTER_ARG1%%$OYSTER_ARG2*}\$OYSTER_ARG3\""
+    eval _gsub
+    strcat
+  ;; *)
+    _push "$OYSTER_ARG1"
+  esac'
+combinator 1 2 gsub
+
+alias _sub='
+  case "$OYSTER_ARG1"
+  in *$OYSTER_ARG2*)
+    eval "push \"\${OYSTER_ARG1%%$OYSTER_ARG2*}\$OYSTER_ARG3\${OYSTER_ARG1#*$OYSTER_ARG2}\""
+  ;; *)
+    _push "$OYSTER_ARG1"
+  esac'
+combinator 1 2 sub
+
+rand() {
+  OYSTER_RAND_SEED=$(( OYSTER_RAND_SEED * 256 % 32768 +
+                     ( OYSTER_RAND_SEED / 16384 + OYSTER_RAND_SEED / 8192 ) % 2 * 128 +
+                     ( OYSTER_RAND_SEED / 8192  + OYSTER_RAND_SEED / 4096 ) % 2 * 64  +
+                     ( OYSTER_RAND_SEED / 4096  + OYSTER_RAND_SEED / 2048 ) % 2 * 32  +
+                     ( OYSTER_RAND_SEED / 2048  + OYSTER_RAND_SEED / 1024 ) % 2 * 16  +
+                     ( OYSTER_RAND_SEED / 1024  + OYSTER_RAND_SEED / 512  ) % 2 * 8   +
+                     ( OYSTER_RAND_SEED / 512   + OYSTER_RAND_SEED / 256  ) % 2 * 4   +
+                     ( OYSTER_RAND_SEED / 256   + OYSTER_RAND_SEED / 128  ) % 2 * 2   +
+                     ( OYSTER_RAND_SEED / 128   + OYSTER_RAND_SEED / 64   ) % 2 ))
+  _push $OYSTER_RAND_SEED
+  next
+}
+
+alias scons='swap cons'
+
+alias sadd='swap add'
+
+alias _add='
+  __esc "$OYSTER_ARG2"
+  _push "$OYSTER_ARG1$OYSTER_ESC_RETURN "'
+combinator 1 1 add
+
+alias _cons='
+  __esc "$OYSTER_ARG2"
+  _push "$OYSTER_ESC_RETURN $OYSTER_ARG1"'
+combinator 1 1 cons
+
+alias _head='
+  eval "set -f; set +f -- $OYSTER_ARG1"
+  _push $1'
+combinator 0 1 head
+
+alias _tail='
+  eval "set -f; set +f -- $OYSTER_ARG1"
+  shift
+  list "$@"'
+combinator 0 1 tail
+
+alias _init='
+  eval "set -f; set +f -- $OYSTER_ARG1"
+  local OYSTER_I=0 OYSTER_X
+  while [ $((OYSTER_I+=1)) -lt $# ]; do
+    OYSTER_X="$OYSTER_X \"\$$OYSTER_I\""
+  done
+
+  eval "list $OYSTER_X"'
+combinator 0 1 init
+
+alias _last='
+  eval "set -f; set +f -- $OYSTER_ARG1"
+  eval "_push \$$#"'
+combinator 0 1 last
+
+
+alias _range='
+  if [ "$OYSTER_ARG2" -lt 0 ]; then
+    eval "set -f; set +f -- $OYSTER_ARG1"
+    OYSTER_ARG2=$(($#+OYSTER_ARG2))
+  fi
+
+  _drop
+  take_ "$OYSTER_ARG3"'
+combinator 1 2 range
+
+alias _index='
+  OYSTER_ARG3=1
+  _range'
+combinator 1 1 index
+
+alias _has='
+  local OYSTER_I OYSTER_X=1
+  eval "set -f; set +f -- $OYSTER_ARG1"
+  for OYSTER_I in "$@"; do
+    case "$OYSTER_I" in "$OYSTER_ARG2")
+      OYSTER_X=0
+      break
+    esac
+    false
+  done
+
+  _push $OYSTER_X'
+combinator 1 1 has
+
+alias _len='
+  eval "set -f; set +f -- $OYSTER_ARG1"
+  _push $#'
+combinator 0 1 len
+
+alias _lookup=''
+combinator 1 1 lookup
+
+alias _drop='
+  eval "set -f; set +f -- $OYSTER_ARG1"
+  shift "$OYSTER_ARG2"
+  list "$@"'
+combinator 1 1 drop
+
+alias _take='
+  local OYSTER_I=0 OYSTER_X
+  eval "set -f; set +f -- $OYSTER_ARG1"
+  while [ $((OYSTER_I+=1)) -le "$OYSTER_ARG2" ]; do
+    OYSTER_X="$OYSTER_X \"\$$OYSTER_I\""
+  done
+
+  eval "list $OYSTER_X"'
+combinator 1 1 take
+
+alias _concat='_push "$2 $1"'
+combinator 1 1 concat
+
+alias _unit='
+  __esc "$OYSTER_ARG1"
+  _push "$OYSTER_ESC_RETURN "'
+combinator 0 1 unit
+
+alias nil='push " "'
+
+alias _words='
+  set -f
+  list $OYSTER_ARG1
+  set +f'
+combinator 0 1 words
+
+alias _uwords='
+  eval "set -f; set +f -- $OYSTER_ARG1"
+  push "$*"'
+combinator 0 1 uwords
+
+alias _sep='
+  case "$OYSTER_ARG1" in *$OYSTER_ARG2*)
+    OYSTER_ARG1=\"\${OYSTER_ARG1#*$OYSTER_ARG2}\"
+    eval _sep
+    eval "cons: \"\${OYSTER_ARG1%%$OYSTER_ARG2*}\""
+  ;; *)
+    unit_ "$OYSTER_ARG1"
+  esac'
+combinator 1 1 sep
+
+alias _usep='
+  eval "set -f; set +f -- $OYSTER_ARG1"
+  local IFS="$OYSTER_ARG2"
+  _push "$*"'
+combinator 1 1 usep
+
+alias _filter='
+  local OYSTER_I OYSTER_X=
+  eval "set -f; set +f -- $OYSTER_ARG1"
+  for OYSTER_I in "$@"; do
+    _push "$OYSTER_I"
+    eval "$OYSTER_ARG2"
+    eval "local OYSTER_T=\"\$$OYSTER$OYSTER_N\""
+    _pop2
+    case $OYSTER_T
+    in 0)
+      __esc "$OYSTER_I"
+      OYSTER_X="$OYSTER_X$OYSTER_ESC_RETURN "
+    esac
+  done
+  _push "$OYSTER_X"'
+combinator 1 1 filter
+
+alias _map='
+  local OYSTER_I OYSTER_X=
+  eval "set -f; set +f -- $OYSTER_ARG1"
+  for OYSTER_I in "$@"; do
+    _push "$OYSTER_I"
+    eval "$OYSTER_ARG2"
+    esc
+    OYSTER_X="$OYSTER_X$OYSTER_ESC_RETURN "
+    _pop1
+  done
+  push "$OYSTER_X"'
+combinator 1 1 map
+
+alias _fold='
+  local OYSTER_I
+  eval "set -f; set +f -- $OYSTER_ARG1"
+  for OYSTER_I in "$@"; do
+    _push "$OYSTER_I"
+    eval "$OYSTER_ARG2"
+  done'
+combinator 3 fold
+
+list() {
+  local OYSTER_I OYSTER_X=
+  for OYSTER_I in "$@"; do
+    __esc "$OYSTER_I"
+    OYSTER_X="$OYSTER_X$OYSTER_ESC_RETURN "
+  done
+
+  _push "$OYSTER_X"
+}
+
+_list_inc2() {
+  case $OYSTER_LIST_NEST in 0)
+    alias ','=add_
+  esac
+
+  rep_ nil "$1"
+  add_ "$2"
+  OYSTER_LIST_NEST=$((OYSTER_LIST_NEST+$1))
+  shift 2
+  next
+}
+
+_list_dec1() {
+  rep_ _list_dec $1
+  shift
+  next
+}
+
+_list_dec() {
+  case $OYSTER_LIST_NEST
+  in 0) return
+  ;; 1)
+    alias ','=push
+  ;; *)
+    add
+  esac
+  OYSTER_LIST_NEST=$((OYSTER_LIST_NEST-1))
+}
+
+define_list_bracket() {
+  local j
+  for j in 1 2 3 4 5 6 7 8 9 10; do
+    local i=0 s=',[' e=']'
+    while [ $((i+=1)) -lt $j ]; do
+      s=$s'['
+      e=$e']'
+    done
+  
+    eval 'alias "$s=_list_inc2 $j"'
+    eval 'alias "$e=_list_dec1 $j"'
+  done
+}
+define_list_bracket
+
+popall() {
+  push pop push $OYSTER_N rep
+}
