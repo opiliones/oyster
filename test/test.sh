@@ -40,14 +40,14 @@ test_stack '@a@ 1 1  @'
 , 3 , 2 , 1 , plus dip , a
 test_stack '5 1 a'
 
-, 3 , 2 , 1 dip_ plus , a
-test_stack '5 1 a'
+, 3 , 2 , 1 dip_ 'plus_ 1 mul' , a
+test_stack '9 1 a'
 
 , 3 , 2 , 1 , plus i , a
 test_stack '3 3 a'
 
-, 3 , 2 , 1 i_ plus , a
-test_stack '3 3 a'
+, 3 , 2 , 1 i_ 'plus x -1' , a
+test_stack '3 -3 a'
 
 , 3 , dup , 4 rep , a
 test_stack '3 3 3 3 3 a'
@@ -136,22 +136,147 @@ test_stack 'b 8 a'
 , b , 6 binrec_ 'dup le_ 2' 'pop , 1' '- 1 dup - 1' plus , a
 test_stack 'b 8 a'
 
-exit
-test_stack ''
+, b , 0 , 1 , 2 ? , a
+test_stack 'b 1 a'
 
-test_stack ''
+, b , 1 ?_ 1  2 , a
+test_stack 'b 2 a'
 
-test_stack ''
+, b , 0 , ', 1' , ', 2' ifel , a
+test_stack 'b 1 a'
 
-test_stack ''
+, b , 1 ifel_ ', 1'  ', 2' , a
+test_stack 'b 2 a'
 
-test_stack ''
+, b , 0 , ', 1' when , a
+test_stack 'b 1 a'
 
-test_stack ''
+, b , 1 when_ ', 1' , a
+test_stack 'b a'
 
-test_stack ''
+, b , " " , a var , a
+, "$a"
+test_stack 'b a  '
 
-test_stack ''
+, b , " " var_ b , a
+, "$b"
+test_stack 'b a  '
 
-test_stack ''
+, b , a readvar , a
+test_stack 'b   a'
+
+, b readvar_ b , a
+test_stack 'b   a'
+
+, b , " b ' ' " esc , a
+test_stack "b ' b '\'' '\'' ' a"
+
+, b esc_ " b ;  ' " , a
+test_stack "b ' b ;  '\'' ' a"
+
+, b , "%Gihi'i6#::k,pjp" strlen , a
+test_stack 'b 16 a'
+
+, b strlen_ "%Gihi'i6#::k,pjp" , a
+test_stack 'b 16 a'
+
+, b , "a'b" , "a*" same , a
+test_stack 'b 0 a'
+
+, b , "a'b" , "a\\'?" same , a
+test_stack 'b 0 a'
+
+, b , "a'b" , "a'b" esc same , a
+test_stack 'b 0 a'
+
+, b , "a'b'c" , "*\\'" stripll , a
+test_stack 'b c a'
+
+, b , "a'b'c" , "*\\'" stripls , a
+test_stack "b b'c a"
+
+, b , "a'b'c" , "\\'*" striprl , a
+test_stack 'b a a'
+
+, b , "a'b'c" , "\\'*" striprs , a
+test_stack "b a'b a"
+#"
+
+, b , "SG$&)'+&*" , 2 , 4 substr , a
+test_stack "b $&)' a"
+
+, b , "SG$&)'+&*" , "?&" , @ gsub , a
+test_stack "b SG@)'@* a"
+
+, b , "SG$&)'+&*" , "?&" , "'" sub , a
+test_stack "b SG')'+&* a"
+
+, b , " " unit , a
+test_stack "b ' '  a"
+
+, b ,[ 1 , 2 , 3 ] init , a
+test_stack "b 1 2  a"
+
+, b ,[ 1 , 2 , 3 ] last , a
+test_stack 'b 3 a'
+
+, b ,[ 1 , 2 , 3 ] head , a
+test_stack 'b 1 a'
+
+, b ,[ 1 , 2 , 3 ] tail , a
+test_stack 'b 2 3  a'
+
+, b ,[ 1 , 2 , 3 ] , 4 add , a
+test_stack 'b 1 2 3 4  a'
+
+, b ,[ 1 , 2 , 3 ] , 0 cons , a
+test_stack 'b 0 1 2 3  a'
+
+, b ,[ 1 , 2 , 3 , 4 ] , -3 , 2  range , a
+test_stack 'b 2 3  a'
+
+, b ,[ 1 , 2 , 3 ] , 0 index , a
+test_stack 'b 1 a'
+
+, b ,[ 1 , 2 , 3 ] , 0 has , a
+test_stack 'b 1 a'
+
+, b ,[ 1 , 2 , 3 ] , 2 has , a
+test_stack 'b 0 a'
+
+, b ,[ 1 , 2 , 3 ] , 0 drop , a
+test_stack 'b 1 2 3  a'
+
+, b ,[ 1 , 2 , 3 ] , 1 drop , a
+test_stack 'b 2 3  a'
+
+, b ,[ 1 , 2 , 3 ] , 0 take , a
+test_stack 'b  a'
+
+, b ,[ 1 , 2 , 3 ] , 3 take , a
+test_stack 'b 1 2 3  a'
+
+, b ,[ 1 , 2 , 3 ] ,[ 4 , 5 ] concat , a
+test_stack 'b 1 2 3 4 5  a'
+
+, b , " this is  a pen " words , a
+test_stack 'b this is a pen  a'
+
+, b ,[ this , is , a , pen ] uwords , a
+test_stack 'b this is a pen a'
+
+, b , " this is  a pen " , s sep , a
+test_stack "b ' thi' ' i' '  a pen '  a"
+
+, b ,[ this , is , a , pen ] , "  " usep , a
+test_stack 'b this  is  a  pen a'
+
+, b ,[ this , is , a , pen ] , "dup same_ '*s*'" filter , a
+test_stack 'b this is  a'
+
+, b , 0 ,[ 1 , 2 , 3 ] , 'plus' fold , a
+test_stack 'b 6 a'
+
+, b ,[ this , is , a , pen ] , "strcat_ '_'" map , a
+test_stack 'b this_ is_ a_ pen_  a'
 
