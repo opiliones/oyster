@@ -736,3 +736,29 @@ popall() {
   done
   _next
 }
+
+_get() {
+  local OYSTER_I=0
+  eval "set -f; set +f -- $OYSTER_ARG1"
+  eval "_$1.$OYSTER_ARG2"
+  _push "$1"
+}
+combinator 1 1 get
+
+data() {
+  local OYSTER_X=$1 OYSTER_I OYSTER_Y=0 OYSTER_Z=
+  shift
+  for OYSTER_I in "$@"; do
+    eval 'alias '_$OYSTER_X.$OYSTER_I'="shift '$((OYSTER_Y+=1))'"
+          alias '$OYSTER_I'="get_ '$OYSTER_I'"
+          OYSTER_Z="$OYSTER_Z\"\$$OYSTER_Y\" "'
+  done
+
+  eval '
+    '$OYSTER_X'() {
+      list "'$OYSTER_X'" '"$OYSTER_Z"'
+      shift '$OYSTER_Y'
+      _next
+    }'
+
+}
