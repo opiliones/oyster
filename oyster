@@ -19,6 +19,7 @@ alias _pop2='OYSTER_N=$((OYSTER_N-2))'
 alias _pop3='OYSTER_N=$((OYSTER_N-3))'
 #alias _pop4='unset $OYSTER$OYSTER_N $OYSTER$((OYSTER_N-=1)) $OYSTER$((OYSTER_N-=1)) $OYSTER$((OYSTER_N-=1)); OYSTER_N=$((OYSTER_N-1))'
 alias _pop4='OYSTER_N=$((OYSTER_N-4))'
+alias popall='OYSTER_N=0'
 alias _setarg0=''
 alias _setarg1='eval "local OYSTER_ARG1=\"\$$OYSTER$OYSTER_N\""'
 alias _setarg2='eval "local OYSTER_ARG2=\"\$$OYSTER$OYSTER_N\" OYSTER_ARG1=\"\$$OYSTER$((OYSTER_N-1))\""'
@@ -36,7 +37,7 @@ alias _setarg0_2='local OYSTER_ARG1="$1" OYSTER_ARG2="$2"'
 alias _setarg0_3='local OYSTER_ARG1="$1" OYSTER_ARG2="$2" OYSTER_ARG3="$3"'
 alias _setarg0_4='local OYSTER_ARG1="$1" OYSTER_ARG2="$2" OYSTER_ARG3="$3" OYSTER_ARG4="$4"'
 
-alias oyster-reset='popall; OYSTER_LIST_NEST=0; alias ,=push'
+alias oyster-reset='oyster_free; OYSTER_LIST_NEST=0; alias ,=push'
 
 fcall() {
   local OYSTER_F="$1"
@@ -83,11 +84,21 @@ swap() {
 }
 
 cmd() {
-  local OYSTER_I=0 OYSTER_X
+  local OYSTER_I=0
   while [ $((OYSTER_I+=1)) -le $OYSTER_N ]; do
     eval 'set -- "$@" "$'"$OYSTER$OYSTER_I"'"'
   done
   popall
+  _next
+}
+
+cmdn() {
+  local OYSTER_I=$((OYSTER_N-$1)) OYSTER_X=$1
+  shift
+  while [ $((OYSTER_I+=1)) -le $OYSTER_N ]; do
+    eval 'set -- "$@" "$'"$OYSTER$OYSTER_I"'"'
+  done
+  rep_ pop "$OYSTER_X"
   _next
 }
 
@@ -728,7 +739,7 @@ define_list_bracket() {
 }
 define_list_bracket
 
-popall() {
+oyster_free() {
   OYSTER_N=0
   local OYSTER_I=0
   while ! eval "[ -z \${$OYSTER$((OYSTER_I+=1))+_} ]"; do
@@ -755,10 +766,11 @@ data() {
   done
 
   eval '
-    '$OYSTER_X'() {
+    '$OYSTER_X'_() {
       list "'$OYSTER_X'" '"$OYSTER_Z"'
       shift '$OYSTER_Y'
       _next
-    }'
-
+    }
+    alias '$OYSTER_X'="cmdn '$OYSTER_Y' '$OYSTER_X'_" 
+  '
 }
