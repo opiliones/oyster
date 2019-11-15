@@ -280,3 +280,15 @@ test_stack 'b 6 a'
 , b ,[ this , is , a , pen ] , "strcat_ '_'" map , a
 test_stack 'b this_ is_ a_ pen_  a'
 
+, b ,[ this , is , a , pen ] , 2 , not ins , a
+test_stack 'b this is not a pen  a'
+
+, b ,[ this , is , a , pen ] , 0 , that ch , a
+test_stack 'b that is a pen  a'
+
+, b ,[ this , is , a , pen ] , 2 del , a
+test_stack 'b this is pen  a'
+
+, b ,[[ apple , 1 ] ,[ orange , 2 ] ,[ banana , 3 ]] , orange lookup , a
+test_stack 'b 2 a'
+

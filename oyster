@@ -11,10 +11,14 @@ shopt -s expand_aliases 2>/dev/null
 
 alias _next='case "$1" in "") return; esac; local OYSTER_F=$1; shift; eval "$OYSTER_F" '\''"$@"'\'
 alias _pop0=''
-alias _pop1='unset $OYSTER$OYSTER_N; OYSTER_N=$((OYSTER_N-1))'
-alias _pop2='unset $OYSTER$OYSTER_N $OYSTER$((OYSTER_N-=1)); OYSTER_N=$((OYSTER_N-1))'
-alias _pop3='unset $OYSTER$OYSTER_N $OYSTER$((OYSTER_N-=1)) $OYSTER$((OYSTER_N-=1)); OYSTER_N=$((OYSTER_N-1))'
-alias _pop4='unset $OYSTER$OYSTER_N $OYSTER$((OYSTER_N-=1)) $OYSTER$((OYSTER_N-=1)) $OYSTER$((OYSTER_N-=1)); OYSTER_N=$((OYSTER_N-1))'
+#alias _pop1='unset $OYSTER$OYSTER_N; OYSTER_N=$((OYSTER_N-1))'
+alias _pop1='OYSTER_N=$((OYSTER_N-1))'
+#alias _pop2='unset $OYSTER$OYSTER_N $OYSTER$((OYSTER_N-=1)); OYSTER_N=$((OYSTER_N-1))'
+alias _pop2='OYSTER_N=$((OYSTER_N-2))'
+#alias _pop3='unset $OYSTER$OYSTER_N $OYSTER$((OYSTER_N-=1)) $OYSTER$((OYSTER_N-=1)); OYSTER_N=$((OYSTER_N-1))'
+alias _pop3='OYSTER_N=$((OYSTER_N-3))'
+#alias _pop4='unset $OYSTER$OYSTER_N $OYSTER$((OYSTER_N-=1)) $OYSTER$((OYSTER_N-=1)) $OYSTER$((OYSTER_N-=1)); OYSTER_N=$((OYSTER_N-1))'
+alias _pop4='OYSTER_N=$((OYSTER_N-4))'
 alias _setarg0=''
 alias _setarg1='eval "local OYSTER_ARG1=\"\$$OYSTER$OYSTER_N\""'
 alias _setarg2='eval "local OYSTER_ARG2=\"\$$OYSTER$OYSTER_N\" OYSTER_ARG1=\"\$$OYSTER$((OYSTER_N-1))\""'
@@ -60,7 +64,7 @@ push() {
 alias ,=push
 
 pop() {
-  unset $OYSTER$OYSTER_N
+#  unset $OYSTER$OYSTER_N
   OYSTER_N=$((OYSTER_N-1))
   _next
 }
@@ -485,7 +489,19 @@ _len() {
 }
 combinator 0 1 len
 
-alias _lookup=''
+_lookup() {
+  local OYSTER_I
+  eval "set -f; set +f -- $OYSTER_ARG1"
+  for OYSTER_I in "$@"; do
+    head_ "$OYSTER_I" same_ "$OYSTER_ARG2"
+    eval "local OYSTER_T=\"\$$OYSTER$OYSTER_N\""
+    _pop1
+    case $OYSTER_T in 0)
+      last_ "$OYSTER_I"
+      break
+    esac
+  done
+}
 combinator 1 1 lookup
 
 _drop() {
@@ -516,6 +532,68 @@ alias _unit='
 combinator 0 1 unit
 
 alias nil='push ""'
+
+_ins() {
+  local OYSTER_I=0 OYSTER_X
+  eval "set -f; set +f -- $OYSTER_ARG1"
+  if [ "$OYSTER_ARG2" -lt 0 ]; then
+    OYSTER_ARG2=$(($#+OYSTER_ARG2))
+  fi
+
+  while [ $((OYSTER_I+=1)) -le "$OYSTER_ARG2" ]; do
+    OYSTER_X="$OYSTER_X \"\$$OYSTER_I\""
+  done
+
+  OYSTER_X="$OYSTER_X \"\$OYSTER_ARG3\""
+  OYSTER_I=$((OYSTER_I-1))
+
+  while [ $((OYSTER_I+=1)) -le "$#" ]; do
+    OYSTER_X="$OYSTER_X \"\$$OYSTER_I\""
+  done
+
+  eval "list $OYSTER_X"
+}
+combinator 1 2 ins
+
+_ch() {
+  local OYSTER_I=0 OYSTER_X
+  eval "set -f; set +f -- $OYSTER_ARG1"
+  if [ "$OYSTER_ARG2" -lt 0 ]; then
+    OYSTER_ARG2=$(($#+OYSTER_ARG2))
+  fi
+
+  while [ $((OYSTER_I+=1)) -le "$OYSTER_ARG2" ]; do
+    OYSTER_X="$OYSTER_X \"\$$OYSTER_I\""
+  done
+
+  OYSTER_X="$OYSTER_X \"\$OYSTER_ARG3\""
+
+  while [ $((OYSTER_I+=1)) -le "$#" ]; do
+    OYSTER_X="$OYSTER_X \"\$$OYSTER_I\""
+  done
+
+  eval "list $OYSTER_X"
+}
+combinator 1 2 ch
+
+_del() {
+  local OYSTER_I=0 OYSTER_X
+  eval "set -f; set +f -- $OYSTER_ARG1"
+  if [ "$OYSTER_ARG2" -lt 0 ]; then
+    OYSTER_ARG2=$(($#+OYSTER_ARG2))
+  fi
+
+  while [ $((OYSTER_I+=1)) -le "$OYSTER_ARG2" ]; do
+    OYSTER_X="$OYSTER_X \"\$$OYSTER_I\""
+  done
+
+  while [ $((OYSTER_I+=1)) -le "$#" ]; do
+    OYSTER_X="$OYSTER_X \"\$$OYSTER_I\""
+  done
+
+  eval "list $OYSTER_X"
+}
+combinator 1 1 del
 
 _words() {
   set -f
@@ -650,10 +728,11 @@ define_list_bracket() {
 }
 define_list_bracket
 
-ins
-
-mod
-
 popall() {
-  push pop push $OYSTER_N rep
+  OYSTER_N=0
+  local OYSTER_I=0
+  while ! eval "[ -z \${$OYSTER$((OYSTER_I+=1))+_} ]"; do
+    unset $OYSTER$OYSTER_I >/dev/null
+  done
+  _next
 }
