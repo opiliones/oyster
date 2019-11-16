@@ -327,14 +327,14 @@ __esc() {
 alias _strlen='_push ${#OYSTER_ARG1}'
 combinator 0 1 strlen
 
-alias _same='
+alias _match='
   case "$OYSTER_ARG1"
   in $OYSTER_ARG2)
     push 0
   ;; *)
     push 1
   esac'
-combinator 1 1 same
+combinator 1 1 match
 
 alias _stripll='eval "_push \"\${OYSTER_ARG1##$OYSTER_ARG2}\""'
 combinator 1 1 stripll
@@ -504,7 +504,7 @@ _lookup() {
   local OYSTER_I
   eval "set -f; set +f -- $OYSTER_ARG1"
   for OYSTER_I in "$@"; do
-    head_ "$OYSTER_I" same_ "$OYSTER_ARG2"
+    head_ "$OYSTER_I" match_ "$OYSTER_ARG2"
     eval "local OYSTER_T=\"\$$OYSTER$OYSTER_N\""
     _pop1
     case $OYSTER_T in 0)

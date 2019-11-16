@@ -180,13 +180,13 @@ test_stack 'b 16 a'
 , b strlen_ "%Gihi'i6#::k,pjp" , a
 test_stack 'b 16 a'
 
-, b , "a'b" , "a*" same , a
+, b , "a'b" , "a*" match , a
 test_stack 'b 0 a'
 
-, b , "a'b" , "a\\'?" same , a
+, b , "a'b" , "a\\'?" match , a
 test_stack 'b 0 a'
 
-, b , "a'b" , "a'b" esc same , a
+, b , "a'b" , "a'b" esc match , a
 test_stack 'b 0 a'
 
 , b , "a'b'c" , "*\\'" stripll , a
@@ -271,7 +271,7 @@ test_stack "b ' thi' ' i' '  a pen '  a"
 , b ,[ this , is , a , pen ] , "  " usep , a
 test_stack 'b this  is  a  pen a'
 
-, b ,[ this , is , a , pen ] , "dup same_ '*s*'" filter , a
+, b ,[ this , is , a , pen ] , "dup match_ '*s*'" filter , a
 test_stack 'b this is  a'
 
 , b , 0 ,[ 1 , 2 , 3 ] , 'plus' fold , a
