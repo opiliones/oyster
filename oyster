@@ -794,8 +794,7 @@ data() {
   local OYSTER_X=$1 OYSTER_I OYSTER_Y=0 OYSTER_Z= OYSTER_Y2 OYSTER_Z2
   shift
   for OYSTER_I in "$@"; do
-    type $OYSTER_I >/dev/null 2>&1
-    eval '
+    type $OYSTER_I >/dev/null 2>&1 || eval '
          _'$OYSTER_I'() {
            eval "set -f; set +f -- $OYSTER_ARG1"
            eval "_$1.'$OYSTER_I'.getter"
