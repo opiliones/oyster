@@ -103,10 +103,11 @@ cmdn() {
 }
 
 cmdn1() {
-  local OYSTER_I=$((OYSTER_N-$1)) OYSTER_X=$1 OYSTER_Y=$2
+  local OYSTER_I=$OYSTER_N OYSTER_X=$1 OYSTER_Y=$2
   shift 2
-  while [ $((OYSTER_I+=1)) -le $OYSTER_N ]; do
+  while [ $((OYSTER_N-OYSTER_I)) -lt $OYSTER_X ]; do
     eval 'set -- "$'"$OYSTER$OYSTER_I"'" "$@"'
+    OYSTER_I=$((OYSTER_I-1))
   done
   rep_ pop "$OYSTER_X"
   eval "$OYSTER_Y "'"$@"'
@@ -806,7 +807,7 @@ data() {
          }
          combinator 1 1 set_'$OYSTER_I
 
-    alias _$OYSTER_X.$OYSTER_I.getter="shift $((OYSTER_I+1)); _push \"\$1\""
+    alias _$OYSTER_X.$OYSTER_I.getter="shift $((OYSTER_Y+1)); _push \"\$1\""
 
     OYSTER_Y2=$((OYSTER_Y+=1))
     OYSTER_Z2="$OYSTER_Z\"\$OYSTER_ARG2\" "
@@ -814,7 +815,7 @@ data() {
       OYSTER_Z2="$OYSTER_Z2\"\$$OYSTER_Y2\" "
     done
 
-    alias _$OYSTER_X.$OYSTER_I.setter="list \"$OYSTER_X\" $OYSTER_Z2"
+    alias _$OYSTER_X.$OYSTER_I.setter="shift; list \"$OYSTER_X\" $OYSTER_Z2"
 
     OYSTER_Z="$OYSTER_Z\"\$$OYSTER_Y\" "
   done
