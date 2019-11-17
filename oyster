@@ -102,6 +102,16 @@ cmdn() {
   _next
 }
 
+cmdn1() {
+  local OYSTER_I=$((OYSTER_N-$1)) OYSTER_X=$1 OYSTER_Y=$2
+  shift 2
+  while [ $((OYSTER_I+=1)) -le $OYSTER_N ]; do
+    eval 'set -- "$'"$OYSTER$OYSTER_I"'" "$@"'
+  done
+  rep_ pop "$OYSTER_X"
+  eval "$OYSTER_Y "'"$@"'
+}
+
 def_cmdn() {
   local OYSTER_I=0 OYSTER_X=
   while [ $((OYSTER_I+=1)) -le $1 ]; do
@@ -815,6 +825,6 @@ data() {
       shift '$OYSTER_Y'
       _next
     }
-    alias '$OYSTER_X'="cmdn '$OYSTER_Y' '$OYSTER_X'_" 
+    alias '$OYSTER_X'="cmdn1 '$OYSTER_Y' '$OYSTER_X'_" 
   '
 }
