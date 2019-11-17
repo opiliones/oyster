@@ -133,18 +133,15 @@ def_cmdn 2
 def_cmdn 3
 def_cmdn 4
 
-cmd_no_pop() {
+p() {
   local OYSTER_I=0 OYSTER_X
   while [ $((OYSTER_I+=1)) -le $OYSTER_N ]; do
     eval 'set -- "$@" "$'"$OYSTER$OYSTER_I"'"'
   done
-  _next
+  printf ", %s " "$@"
+  echo
 }
 
-alias p='cmd_no_pop echo'
-
-
-# combinator 1 2 name
 combinator() {
   [ -z $4 ] && set -- "$@" "_$3"
   eval '
