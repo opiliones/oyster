@@ -1,4 +1,4 @@
 # oyster
-The chained language embedded sh
+The chained language embedded in sh
 
 Under construction
