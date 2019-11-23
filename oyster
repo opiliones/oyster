@@ -448,12 +448,7 @@ combinator 0 1 tail
 
 _init() {
   eval "set -f; set +f -- $OYSTER_ARG1"
-  local OYSTER_I=0 OYSTER_X
-  while [ $((OYSTER_I+=1)) -lt $# ]; do
-    OYSTER_X="$OYSTER_X \"\$$OYSTER_I\""
-  done
-
-  eval "list $OYSTER_X"
+  list_take $(($#-1)) "$@"
 }
 combinator 0 1 init
 
@@ -531,13 +526,8 @@ _drop() {
 combinator 1 1 drop
 
 _take() {
-  local OYSTER_I=0 OYSTER_X
   eval "set -f; set +f -- $OYSTER_ARG1"
-  while [ $((OYSTER_I+=1)) -le "$OYSTER_ARG2" ]; do
-    OYSTER_X="$OYSTER_X \"\$$OYSTER_I\""
-  done
-
-  eval "list $OYSTER_X"
+  list_take "$OYSTER_ARG2" "$@"
 }
 combinator 1 1 take
 
@@ -553,64 +543,30 @@ combinator 0 1 unit
 alias nil='push ""'
 
 _ins() {
-  local OYSTER_I=0 OYSTER_X
   eval "set -f; set +f -- $OYSTER_ARG1"
   if [ "$OYSTER_ARG2" -lt 0 ]; then
     OYSTER_ARG2=$(($#+OYSTER_ARG2))
   fi
-
-  while [ $((OYSTER_I+=1)) -le "$OYSTER_ARG2" ]; do
-    OYSTER_X="$OYSTER_X \"\$$OYSTER_I\""
-  done
-
-  OYSTER_X="$OYSTER_X \"\$OYSTER_ARG3\""
-  OYSTER_I=$((OYSTER_I-1))
-
-  while [ $((OYSTER_I+=1)) -le "$#" ]; do
-    OYSTER_X="$OYSTER_X \"\$$OYSTER_I\""
-  done
-
-  eval "list $OYSTER_X"
+  list_insert "$OYSTER_ARG2" "$OYSTER_ARG3" "$@"
 }
 combinator 1 2 ins
 
 _ch() {
-  local OYSTER_I=0 OYSTER_X
   eval "set -f; set +f -- $OYSTER_ARG1"
   if [ "$OYSTER_ARG2" -lt 0 ]; then
     OYSTER_ARG2=$(($#+OYSTER_ARG2))
   fi
-
-  while [ $((OYSTER_I+=1)) -le "$OYSTER_ARG2" ]; do
-    OYSTER_X="$OYSTER_X \"\$$OYSTER_I\""
-  done
-
-  OYSTER_X="$OYSTER_X \"\$OYSTER_ARG3\""
-
-  while [ $((OYSTER_I+=1)) -le "$#" ]; do
-    OYSTER_X="$OYSTER_X \"\$$OYSTER_I\""
-  done
-
-  eval "list $OYSTER_X"
+  list_change "$OYSTER_ARG2" "$OYSTER_ARG3" "$@"
 }
 combinator 1 2 ch
 
 _del() {
-  local OYSTER_I=0 OYSTER_X
   eval "set -f; set +f -- $OYSTER_ARG1"
   if [ "$OYSTER_ARG2" -lt 0 ]; then
     OYSTER_ARG2=$(($#+OYSTER_ARG2))
   fi
 
-  while [ $((OYSTER_I+=1)) -le "$OYSTER_ARG2" ]; do
-    OYSTER_X="$OYSTER_X \"\$$OYSTER_I\""
-  done
-
-  while [ $((OYSTER_I+=1)) -le "$#" ]; do
-    OYSTER_X="$OYSTER_X \"\$$OYSTER_I\""
-  done
-
-  eval "list $OYSTER_X"
+  list_delete "$OYSTER_ARG2" "$@"
 }
 combinator 1 1 del
 
@@ -703,6 +659,68 @@ list() {
   _push "$OYSTER_X"
 }
 
+list_insert() {
+  local OYSTER_I OYSTER_X= OYSTER_K=$1 OYSTER_Y=$2 OYSTER_M=0
+  shift 2
+  for OYSTER_I in "$@"; do
+    case $OYSTER_M in "$OYSTER_K")
+      __esc "$OYSTER_Y"
+      OYSTER_X="$OYSTER_X$OYSTER_ESC_RETURN "
+    esac    
+    __esc "$OYSTER_I"
+    OYSTER_X="$OYSTER_X$OYSTER_ESC_RETURN "
+    OYSTER_M=$((OYSTER_M+1))
+  done
+
+  _push "$OYSTER_X"
+}
+
+list_change() {
+  local OYSTER_I OYSTER_X= OYSTER_K=$1 OYSTER_Y=$2 OYSTER_M=0
+  shift 2
+  for OYSTER_I in "$@"; do
+    case $OYSTER_M in "$OYSTER_K")
+      OYSTER_I="$OYSTER_Y"
+    esac    
+    __esc "$OYSTER_I"
+    OYSTER_X="$OYSTER_X$OYSTER_ESC_RETURN "
+    OYSTER_M=$((OYSTER_M+1))
+  done
+
+  _push "$OYSTER_X"
+}
+
+list_delete() {
+  local OYSTER_I OYSTER_X= OYSTER_K=$1 OYSTER_M=0
+  shift 1
+  for OYSTER_I in "$@"; do
+    case $OYSTER_M
+    in "$OYSTER_K") :
+    ;; *)
+      __esc "$OYSTER_I"
+      OYSTER_X="$OYSTER_X$OYSTER_ESC_RETURN "
+    esac
+    OYSTER_M=$((OYSTER_M+1))
+  done
+
+  _push "$OYSTER_X"
+}
+
+list_take() {
+  local OYSTER_I OYSTER_X= OYSTER_K=$1 OYSTER_M=0
+  shift 1
+  for OYSTER_I in "$@"; do
+    case $OYSTER_M in "$OYSTER_K")
+      break
+    esac
+    __esc "$OYSTER_I"
+    OYSTER_X="$OYSTER_X$OYSTER_ESC_RETURN "
+    OYSTER_M=$((OYSTER_M+1))
+  done
+
+  _push "$OYSTER_X"
+}
+
 _list_inc2() {
   case $OYSTER_LIST_NEST in 0)
     alias ','=add_
@@ -756,39 +774,8 @@ oyster_free() {
   _next
 }
 
-_oyster_dispatcher() {
-  local OYSTER_X=$1
-  eval "set -f; set +f -- $OYSTER_ARG1"
-  eval "$1.$OYSTER_X"
-}
-
-_getter() {
-  eval "_$1.$OYSTER_ARG2"
-  _push "$1"
-}
-combinator 1 1 getter
-
-_setter() {
-  local OYSTER_I=0 OYSTER_X= OYSTER_Y
-  eval "set -f; set +f -- $OYSTER_ARG1"
-  eval "_$1.set-$OYSTER_ARG2"
-
-  while [ $((OYSTER_I+=1)) -le "$OYSTER_Y" ]; do
-    OYSTER_X="$OYSTER_X \"\$$OYSTER_I\""
-  done
-
-  OYSTER_X="$OYSTER_X \"\$OYSTER_ARG3\""
-
-  while [ $((OYSTER_I+=1)) -le "$#" ]; do
-    OYSTER_X="$OYSTER_X \"\$$OYSTER_I\""
-  done
-
-  eval "list $OYSTER_X"
-}
-combinator 1 2 setter
-
 data() {
-  local OYSTER_X=$1 OYSTER_I OYSTER_Y=0 OYSTER_Z= OYSTER_Y2 OYSTER_Z2
+  local OYSTER_X=$1 OYSTER_I OYSTER_Y=0
   shift
   for OYSTER_I in "$@"; do
     type $OYSTER_I >/dev/null 2>&1 || eval '
@@ -803,22 +790,13 @@ data() {
          }
          combinator 1 1 set_'$OYSTER_I
 
-    alias _$OYSTER_X.$OYSTER_I.getter="shift $((OYSTER_Y+1)); _push \"\$1\""
-
-    OYSTER_Y2=$((OYSTER_Y+=1))
-    OYSTER_Z2="$OYSTER_Z\"\$OYSTER_ARG2\" "
-    while [ $((OYSTER_Y2+=1)) -le $# ]; do
-      OYSTER_Z2="$OYSTER_Z2\"\$$OYSTER_Y2\" "
-    done
-
-    alias _$OYSTER_X.$OYSTER_I.setter="shift; list \"$OYSTER_X\" $OYSTER_Z2"
-
-    OYSTER_Z="$OYSTER_Z\"\$$OYSTER_Y\" "
+    alias _$OYSTER_X.$OYSTER_I.getter="shift $((OYSTER_Y+=1)); _push \"\$1\""
+    alias _$OYSTER_X.$OYSTER_I.setter="list_change $OYSTER_Y \"\$OYSTER_ARG2\" \"\$@\""
   done
 
   eval '
     '$OYSTER_X'_() {
-      list "'$OYSTER_X'" '"$OYSTER_Z"'
+      list_take '$((OYSTER_Y+1))' "'$OYSTER_X'" "$@"
       shift '$OYSTER_Y'
       _next
     }
